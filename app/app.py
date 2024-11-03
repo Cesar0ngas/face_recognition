@@ -134,3 +134,52 @@ elif page == "Attendance":
             st.dataframe(df_attendance)
         else:
             st.write("No attendance records for today.")
+
+        if st.sidebar.button("Start Facial Recognition"):
+            recognition_active = True
+            cap = cv2.VideoCapture(0)
+            stframe = st.empty()
+            status_placeholder = st.sidebar.empty()
+            recognized_faces = set()
+            last_api_call = time.time()
+
+            status_placeholder.write("Facial recognition activated, waiting for faces...")
+
+            stop_recognition = st.sidebar.button("Stop recognition", key="stop_recognition")
+
+            while recognition_active:
+                ret, frame = cap.read()
+                if not ret:
+                    st.error("Error capturing image from the camera.")
+                    break
+
+                stframe.image(frame, channels="BGR", caption="Real-time capture", use_column_width=True)
+
+                if time.time() - last_api_call > 0.5:
+                    name, probability = predict_image(frame)
+                    last_api_call = time.time()
+
+                    if name and name not in recognized_faces:
+                        st.sidebar.success(f"Recognized person: {name} ({probability:.2f}%)")
+                        recognized_faces.add(name)
+                        status_placeholder.write("Waiting for recognition of new faces...")
+
+                        normalized_name = normalize_string(name)
+                        mask = st.session_state.df_students["name"].apply(lambda x: re.search(normalized_name, normalize_string(x)) is not None)
+                        st.session_state.df_students.loc[mask, "attendance"] = True
+
+                        for student_name in st.session_state.df_students.loc[mask, "name"]:
+                            attendance_collection.insert_one({
+                                "name": student_name,
+                                "date": datetime.now(),
+                                "time": datetime.now()
+                            })
+                            students_collection.update_one({"name": student_name}, {"$set": {"attendance": True}})
+                        
+                        student_table.dataframe(st.session_state.df_students.sort_values(by='matricula'))
+
+                if stop_recognition:
+                    recognition_active = False
+                    cap.release()
+                    st.sidebar.write("Facial recognition stopped.")
+
