@@ -1,11 +1,17 @@
-streamlit
-pandas
-requests
-opencv-python
-numpy
-Pillow
-pymongo
-datetime
-tensorflow
-mtcnn
-scikit-learn
+# Archivo de requisitos para la aplicación de Streamlit
+
+# Dependencias principales
+streamlit==1.39.0
+opencv-python==4.10.0.84
+numpy==2.0.2
+pandas==2.2.3
+pymongo==4.10.1
+tensorflow==2.18.0
+keras==3.6.0
+scikit-learn==1.5.2
+mtcnn==1.0.0
+requests==2.32.3
+
+# Otras dependencias que podrías necesitar
+h5py==3.12.1
+tensorflow-hub==0.13.0
