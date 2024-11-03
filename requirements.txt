@@ -1,0 +1,11 @@
+streamlit
+pandas
+requests
+opencv-python
+numpy
+Pillow
+pymongo
+datetime
+tensorflow
+mtcnn
+scikit-learn
