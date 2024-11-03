@@ -18,8 +18,6 @@ students_collection = db.students
 attendance_collection = db.attendance
 
 API_URL = "http://localhost:5000/predict"  # URL for the recognition API
-RETRAIN_URL = "http://localhost:5000/retrain"  # URL to trigger retraining
-
 DATASET_PATH = "./dataset/train/"  # Path to save student images for training
 
 def predict_image(image):
@@ -70,20 +68,9 @@ def save_image_to_dataset(name, image):
     return image_path
 
 def add_student(name, matricula):
-    """Add a new student and retrain the model with their image."""
+    """Add a new student."""
     students_collection.insert_one({"name": name, "matricula": matricula, "attendance": False})
     st.success(f"Student {name} added successfully.")
-    
-    # You might want to provide a default image here or handle image logic differently
-    # For now, we'll skip image saving
-
-    # Trigger retraining by calling the retrain API
-    response = requests.post(RETRAIN_URL)
-    
-    if response.status_code == 200:
-        st.success("Model retrained successfully with the new student.")
-    else:
-        st.error("Model retraining failed.")
 
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Choose a page", ["Home", "Attendance", "Attendance Report"])
