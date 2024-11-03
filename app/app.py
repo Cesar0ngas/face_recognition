@@ -69,14 +69,14 @@ def save_image_to_dataset(name, image):
     image.save(image_path)
     return image_path
 
-def add_student(name, matricula, image):
+def add_student(name, matricula):
     """Add a new student and retrain the model with their image."""
     students_collection.insert_one({"name": name, "matricula": matricula, "attendance": False})
     st.success(f"Student {name} added successfully.")
     
-    # Save the image to the dataset
-    image_path = save_image_to_dataset(name, image)
-    
+    # You might want to provide a default image here or handle image logic differently
+    # For now, we'll skip image saving
+
     # Trigger retraining by calling the retrain API
     response = requests.post(RETRAIN_URL)
     
@@ -119,15 +119,13 @@ elif page == "Attendance":
             with st.form("add_student_form"):
                 name = st.text_input("Student Name")
                 matricula = st.text_input("Student Matricula")
-                image_file = st.file_uploader("Upload Student Image", type=["jpg", "jpeg", "png"])
                 submitted = st.form_submit_button("Add Student")
                 if submitted:
-                    if name and matricula and image_file:
-                        image = Image.open(image_file)
-                        add_student(name, matricula, image)
+                    if name and matricula:
+                        add_student(name, matricula)
                         st.experimental_rerun()  # Refresh the app to clear input fields
                     else:
-                        st.warning("Please enter the student name, matricula, and upload an image.")
+                        st.warning("Please enter the student name and matricula.")
 
             if st.button("Refresh Table"):
                 st.session_state.df_students = load_students_data()
