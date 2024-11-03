@@ -76,7 +76,6 @@ st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Choose a page", ["Home", "Attendance", "Attendance Report"])
 
 if page == "Home":
-    st.image("C:/Users/cesco/Desktop/Personal/UPY/9/didier/2/proyecto/UPY Attendance Systema.jpg", use_column_width=True)
     st.write("Welcome to the UPY Attendance System. Use the sidebar to interact with the application.")
 
 elif page == "Attendance":
