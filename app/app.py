@@ -58,17 +58,7 @@ def clear_attendance():
                                                  "$lt": today.replace(hour=23, minute=59, second=59, microsecond=999999)}})
     st.success("Attendance has been cleared successfully.")
 
-def save_image_to_dataset(name, image):
-    """Save uploaded image to the dataset directory for the new student."""
-    student_path = os.path.join(DATASET_PATH, name)
-    os.makedirs(student_path, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    image_path = os.path.join(student_path, f"{timestamp}.jpg")
-    image.save(image_path)
-    return image_path
-
 def add_student(name, matricula):
-    """Add a new student."""
     students_collection.insert_one({"name": name, "matricula": matricula, "attendance": False})
     st.success(f"Student {name} added successfully.")
 
@@ -88,10 +78,7 @@ elif page == "Attendance":
 
     if group == "B":
         df_students = load_students_data()
-        if not df_students.empty:
-            st.session_state.df_students = df_students
-        else:
-            st.session_state.df_students = pd.DataFrame(columns=["name", "matricula", "attendance"])
+        st.session_state.df_students = df_students if not df_students.empty else pd.DataFrame(columns=["name", "matricula", "attendance"])
 
         col1, col2 = st.columns([2, 1])
 
@@ -106,15 +93,11 @@ elif page == "Attendance":
                 name = st.text_input("Student Name")
                 matricula = st.text_input("Student Matricula")
                 submitted = st.form_submit_button("Add Student")
-                if submitted:
-                    if name and matricula:
-                        add_student(name, matricula)
-                        # Reset the input fields manually
-                        name = ""
-                        matricula = ""
-                        st.session_state.df_students = load_students_data()  # Refresh the student data
-                    else:
-                        st.warning("Please enter the student name and matricula.")
+                if submitted and name and matricula:
+                    add_student(name, matricula)
+                    st.session_state.df_students = load_students_data()
+                elif submitted:
+                    st.warning("Please enter the student name and matricula.")
 
             if st.button("Refresh Table"):
                 st.session_state.df_students = load_students_data()
@@ -134,51 +117,20 @@ elif page == "Attendance":
         else:
             st.write("No attendance records for today.")
 
-        if st.sidebar.button("Start Facial Recognition"):
-            recognition_active = True
-            cap = cv2.VideoCapture(0)
-            stframe = st.empty()
-            status_placeholder = st.sidebar.empty()
-            recognized_faces = set()
-            last_api_call = time.time()
+        st.subheader("Facial Recognition")
+        
+        # Capture image with camera_input
+        image = st.camera_input("Capture your image")
 
-            status_placeholder.write("Facial recognition activated, waiting for faces...")
+        if image:
+            img = Image.open(image)
+            img_array = np.array(img)
+            name, probability = predict_image(img_array)
 
-            stop_recognition = st.sidebar.button("Stop recognition", key="stop_recognition")
-
-            while recognition_active:
-                ret, frame = cap.read()
-                if not ret:
-                    st.error("Error capturing image from the camera.")
-                    break
-
-                stframe.image(frame, channels="BGR", caption="Real-time capture", use_column_width=True)
-
-                if time.time() - last_api_call > 0.5:
-                    name, probability = predict_image(frame)
-                    last_api_call = time.time()
-
-                    if name and name not in recognized_faces:
-                        st.sidebar.success(f"Recognized person: {name} ({probability:.2f}%)")
-                        recognized_faces.add(name)
-                        status_placeholder.write("Waiting for recognition of new faces...")
-
-                        normalized_name = normalize_string(name)
-                        mask = st.session_state.df_students["name"].apply(lambda x: re.search(normalized_name, normalize_string(x)) is not None)
-                        st.session_state.df_students.loc[mask, "attendance"] = True
-
-                        for student_name in st.session_state.df_students.loc[mask, "name"]:
-                            attendance_collection.insert_one({
-                                "name": student_name,
-                                "date": datetime.now(),
-                                "time": datetime.now()
-                            })
-                            students_collection.update_one({"name": student_name}, {"$set": {"attendance": True}})
-                        
-                        student_table.dataframe(st.session_state.df_students.sort_values(by='matricula'))
-
-                if stop_recognition:
-                    recognition_active = False
-                    cap.release()
-                    st.sidebar.write("Facial recognition stopped.")
+            if name:
+                st.success(f"Recognized person: {name} ({probability:.2f}%)")
+                st.session_state.df_students.loc[st.session_state.df_students["name"] == name, "attendance"] = True
+                attendance_collection.insert_one({"name": name, "date": datetime.now(), "time": datetime.now()})
+                students_collection.update_one({"name": name}, {"$set": {"attendance": True}})
+                student_table.dataframe(st.session_state.df_students.sort_values(by='matricula'))
 
