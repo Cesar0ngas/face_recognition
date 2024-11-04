@@ -6,7 +6,6 @@ import os
 
 # Agrega el directorio `scripts` a la ruta de búsqueda de Python
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../scripts')))
-
 from face_recognition import recognize_person  # Importa desde scripts
 
 app = Flask(__name__)
@@ -30,6 +29,3 @@ def predict():
         return jsonify({"name": name, "probability": probability})
     else:
         return jsonify({"error": "No face detected or unexpected output"}), 400
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
