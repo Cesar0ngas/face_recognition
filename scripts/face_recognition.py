@@ -17,7 +17,7 @@ def download_model():
     if response.status_code == 200:
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         with open(model_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
+            for chunk in response.iter_content(chunk_size=1024*1024):  # 1 MB chunks
                 f.write(chunk)
         print("Modelo descargado con éxito.")
     else:
