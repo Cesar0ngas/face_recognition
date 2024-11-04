@@ -17,8 +17,8 @@ db = client.AttendanceDB
 students_collection = db.students
 attendance_collection = db.attendance
 
-API_URL = "http://localhost:5000/predict"  # URL for the recognition API
-DATASET_PATH = "./dataset/train/"  # Path to save student images for training
+API_URL = "https://peaceful-castle-86006.herokuapp.com/predict"
+DATASET_PATH = "./dataset/train/" 
 
 def predict_image(image):
     try:
