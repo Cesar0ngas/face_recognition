@@ -10,8 +10,8 @@ import pickle
 model_path = 'models/facenet_keras.h5'
 model_url = 'https://storage.googleapis.com/facenet_keras/facenet_keras.h5'  # Cambia esto con la URL de tu archivo en Google Cloud Storage
 
-# Verificar si el archivo existe y tiene un tamaño razonable, si no, descargarlo
-if not os.path.exists(model_path) or os.path.getsize(model_path) < 1_000_000:  # Tamaño mínimo de 1MB como ejemplo
+# Función para descargar el modelo
+def download_model():
     print("Descargando el modelo desde Google Cloud Storage...")
     response = requests.get(model_url, stream=True)
     if response.status_code == 200:
@@ -23,12 +23,18 @@ if not os.path.exists(model_path) or os.path.getsize(model_path) < 1_000_000:  #
     else:
         raise Exception("Error al descargar el modelo, verifica la URL y el acceso público.")
 
-# Cargar el modelo FaceNet, el clasificador y el codificador
+# Verificar si el archivo existe y tiene un tamaño razonable, si no, descargarlo
+if not os.path.exists(model_path) or os.path.getsize(model_path) < 1_000_000:  # Tamaño mínimo de 1MB como ejemplo
+    download_model()
+
+# Intentar cargar el modelo, si falla, volver a descargar e intentar cargar de nuevo
 try:
     model = load_model(model_path)
 except Exception as e:
-    print(f"Error al cargar el modelo: {e}")
-    raise
+    print(f"Error al cargar el modelo: {e}. Volviendo a descargar el archivo...")
+    os.remove(model_path)  # Eliminar el archivo corrupto
+    download_model()  # Volver a descargar
+    model = load_model(model_path)  # Intentar cargar nuevamente
 
 # Cargar el clasificador y el codificador
 with open('models/svm_classifier.pkl', 'rb') as f:
