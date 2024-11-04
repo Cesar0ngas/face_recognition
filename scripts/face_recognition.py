@@ -1,11 +1,30 @@
+import os
+import requests
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from mtcnn import MTCNN
 import pickle
 
+# Definir la ruta del modelo y la URL en Google Cloud Storage
+model_path = 'models/facenet_keras.h5'
+model_url = 'https://storage.googleapis.com/facenet_keras/facenet_keras.h5' 
+
+# Verificar si el archivo existe, si no, descargarlo
+if not os.path.exists(model_path):
+    print("Descargando el modelo desde Google Cloud Storage...")
+    response = requests.get(model_url, stream=True)
+    if response.status_code == 200:
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        with open(model_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print("Modelo descargado con éxito.")
+    else:
+        raise Exception("Error al descargar el modelo, verifica la URL y el acceso público.")
+
 # Cargar el modelo FaceNet, el clasificador y el codificador
-model = load_model('models/facenet_keras.h5')
+model = load_model(model_path)
 with open('models/svm_classifier.pkl', 'rb') as f:
     classifier = pickle.load(f)
 with open('models/label_encoder.pkl', 'rb') as f:
